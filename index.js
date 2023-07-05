@@ -11,11 +11,11 @@ program.name('royal-patrons')
 
 program
   .command('run')
-  .description('Runs royalty-patrons')
+  .description('Runs royal-patrons')
   .argument('<contractAddresses>', 'Comma separated list of all NFT contract addresses you want to track (or path to file) ')
   .argument('<recipientAddresses>', 'Comma separated list of all addresses that would have received royalties (or path to file) ')
   .option('-w --weth <weth>', 'Include royalty payments in WETH', true)
-  .option('-o --output <output>', 'Output file name', 'royalty-patrons.csv')
+  .option('-o --output <output>', 'Output file name', 'royal-patrons.csv')
   .option('-v --verbose', 'Verbose output', false)
   .option('-e --etherscanAPI', 'Etherscan API key', process.env.ETHERSCAN_API_KEY)
   .action(async (contractAddresses, recipientAddresses, { weth, output, verbose, etherscanAPI }, cmd) => {

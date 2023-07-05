@@ -1,6 +1,6 @@
 {
   "name": "royal-patrons",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A tool for collecting addresses of NFT buyers who paid royalties.",
   "main": "index.js",
   "bin": "index.js",

@@ -34,7 +34,7 @@ You could alternatively provide a filepath containing them as comma separated va
 $ royal-patrons run -h
 Usage: royal-patrons run [options] <contractAddresses> <recipientAddresses>
 
-Runs royalty-patrons
+Runs royal-patrons
 
 Arguments:
   contractAddresses     Comma separated list of all NFT contract addresses you want
@@ -44,7 +44,7 @@ Arguments:
 
 Options:
   -w --weth <weth>      Include royalty payments in WETH (default: true)
-  -o --output <output>  Output file name (default: "royalty-patrons.csv")
+  -o --output <output>  Output file name (default: "royal-patrons.csv")
   -v --verbose          Verbose output (default: false)
   -e --etherscanAPI     Etherscan API key
   -h, --help            display help for command
