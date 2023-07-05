@@ -1,6 +1,6 @@
 # Royal Patrons
 
-This is a CLI application that helps in collecting addresses of NFT patrons who've paid royalties.
+This is a CLI application that helps in collecting addresses of NFT patrons who've paid royalties. It was created as part of the launch of https://viper.folia.app.
 
 ## Installation
 
@@ -24,6 +24,17 @@ npm install
 
 ## Usage
 
+Make sure that you've added `ETHERSCAN_API_KEY` to your environment with your Etherscan API key. You can get one from https://etherscan.io/myapikey. You can add the key to your environment with the following command:
+
+```bash
+ETHERSCAN_API_KEY=<your-key>
+```
+And to check it's set correctly, run:
+
+```bash
+echo $ETHERSCAN_API_KEY
+```
+
 ```bash
 $ royal-patrons run -h
 Usage: royal-patrons run [options] <contractAddresses> <recipientAddresses>
@@ -42,4 +53,3 @@ Options:
   -v --verbose          Verbose output (default: false)
   -h, --help            display help for command
 ```
-
