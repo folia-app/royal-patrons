@@ -1,4 +1,4 @@
-# Royal Patrons
+# Royal Patrons 👑
 
 This is a CLI application that helps in collecting addresses of NFT patrons who've paid royalties.  
 It was created to collect addresses for an allowlist using https://lanyard.org as part of the launch of https://viper.folia.app.
