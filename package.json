@@ -1,8 +1,9 @@
 {
   "name": "royal-patrons",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A tool for collecting addresses of NFT buyers who paid royalties.",
   "main": "index.js",
+  "bin": "index.js",
   "repository": "https://github.com/folia-app/royal-patrons",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

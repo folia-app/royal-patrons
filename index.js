@@ -17,16 +17,16 @@ program
   .option('-w --weth <weth>', 'Include royalty payments in WETH', true)
   .option('-o --output <output>', 'Output file name', 'royalty-patrons.csv')
   .option('-v --verbose', 'Verbose output', false)
-  .action(async (contractAddresses, recipientAddresses, { weth, output, verbose }, cmd) => {
+  .option('-e --etherscanAPI', 'Etherscan API key', process.env.ETHERSCAN_API_KEY)
+  .action(async (contractAddresses, recipientAddresses, { weth, output, verbose, etherscanAPI }, cmd) => {
     console.log("Starting...")
     console.time('royal-patrons')
-    if (process.env.ETHERSCAN_API_KEY === undefined) {
-      throw new Error('You must set an ETHERSCAN_API_KEY in your .env file')
+    console.log({ etherscanAPI })
+    if (etherscanAPI === undefined || etherscanAPI === "") {
+      throw new Error('You must set an ETHERSCAN_API_KEY in your .env file or as --etherscanAPI flag')
     }
+    process.env.ETHERSCAN_API_KEY = etherscanAPI
     process.env.verbose = verbose
-    // if (process.env.INFURA_API_KEY === undefined) {
-    //   throw new Error('You must set an INFURA_API_KEY in your .env file')
-    // }
 
     const wethAddress = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 
