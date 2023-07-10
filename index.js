@@ -2,7 +2,7 @@
 
 require('dotenv').config()
 const { Command } = require('commander');
-const { validateAddresses, makeRequest, getBuyersAddress, saveOutput, transferTopic, log } = require('./utils')
+const { reverseLookup, validateAddresses, makeRequest, getBuyerSellerAddress, saveOutput, transferTopic, log } = require('./utils')
 const program = new Command();
 
 program.name('royal-patrons')
@@ -21,7 +21,6 @@ program
   .action(async (contractAddresses, recipientAddresses, { weth, output, verbose, etherscanAPI }, cmd) => {
     console.log("Starting...")
     console.time('royal-patrons')
-    console.log({ etherscanAPI })
     if (etherscanAPI === undefined || etherscanAPI === "") {
       throw new Error('You must set an ETHERSCAN_API_KEY in your .env file or as --etherscanAPI flag')
     }
@@ -103,25 +102,26 @@ program
 
     // make ethTxs unique
     ethTxs = [...new Set(ethTxs)]
-    log(`Found ${ethTxs.length} ETH txs that paid royalties`)
+    log(`Found ${ethTxs.length} ETH txs that had paid royalties`)
     // check the tx to see the all the logs
     // if one of the logs is a transfer of one of the contract NFTs, add the to address to the list of ETH payers
     for (let i = 0; i < ethTxs.length; i++) {
       const tx = ethTxs[i]
-      const address = await getBuyersAddress(tx, ethTxToContractAddress[tx])
-      if (address) {
-        ethPayers.push(address)
+      const address = await getBuyerSellerAddress(tx, ethTxToContractAddress[tx])
+      if (address.length > 0) {
+        // add "address" array to ethPayers array
+        ethPayers.push(...address)
       }
     }
 
 
     // make ethPayers unique
     const uniqueEthPayers = [...new Set(ethPayers)]
-    log(`Found ${uniqueEthPayers.length} unique patrons that paid royalties in ETH`)
+    log(`Found ${uniqueEthPayers.length} unique patrons that paid royalties or sellers that enforced royalties in ETH`)
 
     if (!weth) {
       if (uniqueEthPayers.length === 0) {
-        log(`Found no unique patrons that paid royalties in ETH`)
+        log(`Found no unique patrons that paid royalties or sellers that enforced royalties in ETH`)
         return
       }
       await saveOutput(uniqueEthPayers, output);
@@ -146,27 +146,48 @@ program
         }
         // this is a tx that included the transfer of WETH to an earnings address
         const tx = json.result[j]
-        const address = await getBuyersAddress(tx.transactionHash, contractAddresses)
-        if (address) {
-          wethPayers.push(address)
+        const address = await getBuyerSellerAddress(tx.transactionHash, contractAddresses)
+        if (address.length > 0) {
+          wethPayers.push(...address)
         }
       }
     }
     // make wethPayers unique
     const uniqueWethPayers = [...new Set(wethPayers)]
-    log(`Found ${uniqueWethPayers.length} unique patrons that paid royalties in WETH`)
+    log(`Found ${uniqueWethPayers.length} unique patrons that paid royalties or sellers that enforced royalties in WETH`)
 
     const combinedAllPayers = [...new Set([...uniqueWethPayers, ...uniqueEthPayers])]
     if (combinedAllPayers.length === 0) {
-      log(`Found no unique patrons that paid royalties in ETH or WETH`)
+      log(`Found no unique patrons that paid royalties or sellers that enforced royalties in ETH or WETH`)
       return
     }
 
     await saveOutput(combinedAllPayers, output);
     console.timeEnd('royal-patrons')
-    console.log(`Found ${combinedAllPayers.length} unique patrons that paid royalties in ETH or WETH, saved to ./${output}`)
+    console.log(`Found ${combinedAllPayers.length} unique patrons that paid royalties or sellers that enforced royalties in ETH or WETH, saved to ./${output}`)
   })
 
+program
+  .command('ens')
+  .description('Gets the ENS name for all the addresses in royal-patrons.csv')
+  .option('-i --input <input>', 'Input file name', 'royal-patrons.csv')
+  .action(async ({ input }, cmd) => {
+    const fs = require('fs')
+    const contents = fs.readFileSync(input, 'utf8')
+    const addresses = contents.split(',')
+    const tenth = Math.floor(addresses.length / 10)
+    for (let i = 0; i < addresses.length; i++) {
+      if (i % tenth == 0 && i > 0) {
+        console.log(Math.floor((i * 100) / addresses.length) + `% done`)
+      }
+      const address = addresses[i]
+      console.log(`                                checking '${address}'`)
+      const ens = await reverseLookup(address)
+      if (ens !== address) {
+        console.log(ens)
+      }
+    }
+  })
 
 if (process.argv === 0) {
   program.help()

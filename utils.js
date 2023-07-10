@@ -1,6 +1,7 @@
 const fs = require('fs')
 const ethers = require('ethers')
 const { type } = require('os')
+require('dotenv').config()
 
 const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 
@@ -11,6 +12,22 @@ const log = (message, isVerbose = false) => {
     show && console.timeLog('royal-patrons', "| ", { message })
   } else {
     show && console.timeLog('royal-patrons', "| " + message)
+  }
+}
+
+
+async function reverseLookup(address) {
+  const provider = new ethers.providers.InfuraProvider(
+    "homestead",
+    process.env.INFURA_API_KEY || '',
+  );
+  let name
+  try {
+    name = await provider.lookupAddress(address)
+    return name || address
+  } catch (e) {
+    // console.log({ e })
+    return address
   }
 }
 
@@ -67,9 +84,9 @@ const makeRequest = async (url) => {
   return results.json()
 }
 
-async function getBuyersAddress(tx, contractAddresses) {
+async function getBuyerSellerAddress(tx, contractAddresses) {
   let txJson
-  let buyersAddress = false
+  let buyersAddress = []
   try {
     const request = `https://api.etherscan.io/api?module=proxy&action=eth_getTransactionReceipt&txhash=${tx}&apikey=${process.env.ETHERSCAN_API_KEY}`
     txJson = await makeRequest(request)
@@ -86,8 +103,9 @@ async function getBuyersAddress(tx, contractAddresses) {
           // this is a transfer of a contract token
           // add the "to" address to the wethPayers array
           buyersAddress = "0x" + (log_.topics[2].slice(26).toLowerCase().padStart(40, '0'))
-          log(`found an NFT transfer from contract ${m + 1} to ${buyersAddress} in tx ${tx}`, true)
-          return buyersAddress
+          sellersAddress = "0x" + (log_.topics[1].slice(26).toLowerCase().padStart(40, '0'))
+          log(`found an NFT transfer from contract ${m + 1} sold by ${sellersAddress} to ${buyersAddress} in tx ${tx}`, true)
+          return [buyersAddress, sellersAddress]
         }
       }
     }
@@ -108,5 +126,5 @@ const saveOutput = async (array, output) => {
 
 
 module.exports = {
-  validateAddresses, wait, makeRequest, getBuyersAddress, saveOutput, transferTopic, log
+  reverseLookup, validateAddresses, wait, makeRequest, getBuyerSellerAddress, saveOutput, transferTopic, log
 }

@@ -49,3 +49,16 @@ Options:
   -e --etherscanAPI     Etherscan API key
   -h, --help            display help for command
 ```
+
+There's also a command for parsing the list of addresses as ENS names:
+
+```bash
+$ royal-patrons ens -h
+Usage: royal-patrons ens [options]
+
+Gets the ENS name for all the addresses in royal-patrons.csv
+
+Options:
+  -i --input <input>  Input file name (default: "royal-patrons.csv")
+  -h, --help          display help for command
+```
