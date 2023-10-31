@@ -3,6 +3,19 @@
 This is a CLI application that helps in collecting addresses of NFT patrons who've paid royalties.  
 It was created to collect addresses for an allowlist using https://lanyard.org as part of the launch of https://viper.folia.app.
 
+## Contracts
+
+0x536580914cda50c7b74ba2cb693a38ffa4784d82, // CBL - 220
+0x20c70bdfcc398c1f06ba81730c8b52ace3af7cc3, // MGS - 274
+0xdce09254dd3592381b6a5b7a848b29890b656e01, // FLA - 339
+0x9d413b9434c20c73f509505f7fbc6fc591bbf04a, // KUDZU - 792
+0x76e422de0ce8842ebe837bc7ab6984b4fff88055, // X2 - 13
+0x6ca044fb1cd505c1db4ef7332e73a236ad6cb71c, // DOTCOM - 251
+0xc50161e1f4015a4f4b91cf98b996b7001ceaccf0, // DCMP - 150
+0x9a6b280d9de461c16e9d47fb7996acbe36eac50b, // STR - 128
+0x32f8f03197c55741ccf8dea9d8f014281bd30183, // VPR - 221
+0x044ec6ce7e87859eb9d3ca966cadfb7926d0c482 // BBVPR - 297
+
 ## Installation
 
 To install the application you can `npm` or `yarn` as follows:
