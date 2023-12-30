@@ -1,20 +1,39 @@
 const fs = require('fs')
 const ethers = require('ethers')
 const { type } = require('os')
+const axios = require("axios");
 require('dotenv').config()
 
 const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 
-const log = (message, isVerbose = false) => {
+const log = (message, isVerbose = false, timelog = 'royal-patrons') => {
   const verbose = process.env.verbose === 'true'
   const show = isVerbose && verbose || !isVerbose
   if (typeof message === 'object') {
-    show && console.timeLog('royal-patrons', "| ", { message })
+    show && console.log({ message })
   } else {
-    show && console.timeLog('royal-patrons', "| " + message)
+    show && console.log(message)
   }
 }
 
+async function getNFTs(contract, cursor) {
+
+  const Auth = Buffer.from(
+    process.env.INFURA_API_KEY + ":" + process.env.INFURA_API_KEY_SECRET,
+  ).toString("base64");
+
+  const chainId = "1";
+  const tokenAddress = contract;
+
+  return axios.get(
+    `https://nft.api.infura.io/networks/${chainId}/nfts/${tokenAddress}/owners${cursor ? "?cursor=" + cursor : ""}`,
+    {
+      headers: {
+        Authorization: `Basic ${Auth}`,
+      },
+    },
+  );
+}
 
 async function reverseLookup(address) {
   const provider = new ethers.providers.InfuraProvider(
@@ -37,7 +56,6 @@ const validateAddresses = (addressesParam, name) => {
   if (fs.existsSync(addresses)) {
     addresses = fs.readFileSync(addresses, 'utf8')
   }
-
   // check to make sure addresses is a list of valid addresses
   addresses = addresses.split(',')
   addresses = addresses.map(address => address.trim())
@@ -68,7 +86,7 @@ const wait = async (time = 200) => {
 let requests = 0
 let lastRequest = false
 
-const makeRequest = async (url) => {
+const makeRequest = async (url, headerInfo) => {
   requests++
   let timeSinceLastRequest
   if (lastRequest) {
@@ -80,7 +98,13 @@ const makeRequest = async (url) => {
     }
   }
   lastRequest = Date.now()
-  let results = await fetch(url)
+  let results = await fetch(url, {
+    headers: {
+      'X-API-KEY': headerInfo.apiKey || '',
+      'Accept': 'application/json',
+      ...headerInfo.otherHeaders
+    }
+  })
   return results.json()
 }
 
@@ -126,5 +150,6 @@ const saveOutput = async (array, output) => {
 
 
 module.exports = {
+  getNFTs,
   reverseLookup, validateAddresses, wait, makeRequest, getBuyerSellerAddress, saveOutput, transferTopic, log
 }

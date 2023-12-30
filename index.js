@@ -2,12 +2,102 @@
 
 require('dotenv').config()
 const { Command } = require('commander');
-const { reverseLookup, validateAddresses, makeRequest, getBuyerSellerAddress, saveOutput, transferTopic, log } = require('./utils')
+const { getNFTs, reverseLookup, validateAddresses, makeRequest, getBuyerSellerAddress, saveOutput, transferTopic, log } = require('./utils')
 const program = new Command();
 
 program.name('royal-patrons')
   .description('CLI to help collect addresses of NFT patrons that paid royalties')
   .version(require('./package').version)
+
+program
+  .command('onlEFANs')
+  .description('CLI to cross reference a list of onlEFANs holders with Coordinates premint addresses')
+  .action(async ({ }, cmd) => {
+    console.log(`Starting...`)
+    // read big-preint.csv and export-tokenholders-for-nft-contract.csv
+    const fs = require('fs')
+    const premintContents = fs.readFileSync('big-premint.csv', 'utf8')
+    const premintAddresses = premintContents.split(',')
+    const onlEFANsContents = fs.readFileSync('export-tokenholders-for-nft-contract-0xA94e0a7A78CF396691B6d5Fb6F6aE7aD53CC0dBe.csv', 'utf8')
+    // const onlEFANsAddresses = onlEFANsContents.split(',').filter((address, index) => address.length > 5)
+    // parse csv
+    const onlEFANsAddresses = onlEFANsContents.split('\n').map(line => line.split(',')[0]).filter((address, index) => address.length > 15).map(address => address.replaceAll("\"", ""))
+    // console.log({ onlEFANsAddresses })
+    // compare the two lists
+    const onlEFANsPremintAddresses = onlEFANsAddresses.filter(address => premintAddresses.includes(address))
+    // save the results to onlEFANs-premint.csv
+    // print out the addresses as ENS names
+    for (let i = 0; i < onlEFANsPremintAddresses.length; i++) {
+      const address = onlEFANsPremintAddresses[i]
+      const ens = await reverseLookup(address)
+      console.log(`${ens}`)
+    }
+    // console.log({ onlEFANsPremintAddresses: onlEFANsPremintAddresses.map(async address => await reverseLookup(address)) })
+    console.log(`${onlEFANsPremintAddresses.length} out of ${onlEFANsAddresses.length} onlEFANs holders are on the Coordinates premint list`)
+
+  })
+
+program
+  .command('big-premint')
+  .description('CLI to help collect addresses of all NFT holders of specific contracts')
+  .argument('<contractAddresses>', 'Comma separated list of all NFT contract addresses you want to track (or path to file) ')
+  .option('-o --output <output>', 'Output file name', 'big-premint.csv')
+  .option('-v --verbose', 'Verbose output', true)
+  .option('-e --etherscanAPI', 'Etherscan API key', process.env.ETHERSCAN_API_KEY)
+  .action(async (contractAddresses, { output, verbose, etherscanAPI }, cmd) => {
+    console.log("Starting...")
+    const timelog = 'big-premint'
+    console.time(timelog)
+    if (etherscanAPI === undefined || etherscanAPI === "") {
+      throw new Error('You must set an ETHERSCAN_API_KEY in your .env file or as --etherscanAPI flag')
+    }
+    process.env.ETHERSCAN_API_KEY = etherscanAPI
+    process.env.verbose = verbose
+    contractAddresses = validateAddresses(contractAddresses, "contractAddresses")
+    log({ contractAddresses }, verbose, timelog)
+    log(`Checking ${contractAddresses.length} contract${contractAddresses.length > 1 ? 's' : ''} for owners`, true, timelog)
+    let owners = []
+    for (let q = 0; q < contractAddresses.length; q++) {
+      const contract = contractAddresses[q]
+      // get all owners of the NFT contract
+      log(`checking contract #${q + 1} for owners`, true, timelog)
+      let gotAllOfThem = false
+      let page = 1
+      let thisBatch = 0
+      let cursor = null
+      while (!gotAllOfThem) {
+        // const request = `https://api.opensea.io/api/v1/assets?${cursor ? "cursor=" + cursor + "&" : ""}order_direction=desc&asset_contract_addresses=${contract}&limit=200&include_orders=false`
+
+        // const request = `https://api.etherscan.io/api?module=token&action=tokenholderlist&contractaddress=${contract}&page=${page}&offset=1000&apikey=${process.env.ETHERSCAN_API_KEY}`
+        // console.log({ request })
+        // const json = await makeRequest(request, {
+        //   apiKey: process.env.OS_API,
+        // })
+        const json = await getNFTs(contract, cursor)
+        // console.log({ json })
+        // console.log({ owners: json.data.owners })
+        const these_owners = json.data.owners.map(owner => owner.ownerOf)
+        owners.push(...these_owners)
+        thisBatch += these_owners.length
+        if (json.data.cursor) {
+          cursor = json.data.cursor
+        } else {
+          cursor = null
+          gotAllOfThem = true
+        }
+      }
+      log(`Found ${thisBatch} owners in contract #${q + 1}`, true, timelog)
+      log(`Total is ${owners.length}`)
+      owners = [...new Set(owners)]
+      log(`Total unique is ${owners.length}`)
+    }
+    log(`Found total of ${owners.length} unique owners`, true, timelog)
+
+    await saveOutput(owners, output);
+    console.timeEnd('big-premint')
+    console.log(`Found ${owners.length} unique owners, saved to ./${output}`, true, timelog)
+
+  })
 
 program
   .command('run')
